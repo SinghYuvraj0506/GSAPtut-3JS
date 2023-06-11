@@ -1,64 +1,56 @@
 import "./App.css";
-import { Canvas } from "@react-three/fiber";
-import { MeshDistortMaterial, OrbitControls, Sphere, Stage } from "@react-three/drei";
-import Cube from "./Components/Cube";
-import PC from "./Models/Pc.jsx"
-import EarthModel from "./Models/Earth.jsx"
+import {Routes, Route, useLocation } from "react-router-dom";
+
+import Three from "./Components/Three";
+import Header from "./Components/Pizza Web/Header.jsx";
+import Home from "./Components/Pizza Web/Home.jsx";
+import Base from "./Components/Pizza Web/Base.jsx";
+import Toppings from "./Components/Pizza Web/Toppings.jsx";
+import Order from "./Components/Pizza Web/Order.jsx";
+import { useState } from "react";
+
+import { AnimatePresence } from "framer-motion";
+import Modal from "./Components/Pizza Web/Modal";
 
 function App() {
+  const location = useLocation();
+  const [pizza, setPizza] = useState({ base: "", toppings: [] });
+
+  const [showModal, setShowModal] = useState(false)
+
+  const addBase = (base) => {
+    setPizza({ ...pizza, base });
+  };
+
+  const addTopping = (topping) => {
+    let newToppings;
+    if (!pizza.toppings.includes(topping)) {
+      newToppings = [...pizza.toppings, topping];
+    } else {
+      newToppings = pizza.toppings.filter((item) => item !== topping);
+    }
+    setPizza({ ...pizza, toppings: newToppings });
+  };
+
   return (
     <>
-      <div className="basic_container">
-        {/* Main frame in white 3d model will be rendered */}
-        <Canvas camera={{ fov: 25, position: [5, 5, 5] }}>
-          <OrbitControls enableZoom={false} autoRotate />
-          <ambientLight intensity={1} />
-          <directionalLight position={[2, 4, 5]} />
-          <Cube />
-        </Canvas>
-      </div>
-
-
-      {/* 3d sphere rendering */}
-      <div className="basic_container">
-        {/* Main frame in white 3d model will be rendered */}
-        <Canvas >
-          <OrbitControls enableZoom={false} />
-          <ambientLight intensity={1} />
-          <directionalLight position={[2,0,2]} />
-          <Sphere args={[1, 100, 200]} scale={2.4}>
-            <MeshDistortMaterial
-              color="#220736"
-              attach="material"
-              distort={0.5}
-              speed={2}
-            />
-          </Sphere>
-        </Canvas>
-      </div>
-
-
-
-      {/* Displaying gltf models ----------- */}
-
-      <div className="basic_container">
-        <Canvas camera={{fov:25}}>
-          <Stage environment="city" intensity={0.5}>
-          <PC/>
-          </Stage>
-          <OrbitControls enableZoom={false}/>
-        </Canvas>
-      </div>
-
-
-      <div className="basic_container">
-        <Canvas>
-          <Stage environment="city" intensity={0.5}>
-          <EarthModel/>
-          </Stage>
-          <OrbitControls enableZoom={false}/>
-        </Canvas>
-      </div>
+      <Header />
+      <Modal showModal={showModal} setShowModal={setShowModal}/>
+      <AnimatePresence mode="wait" onExitComplete={()=>{setShowModal(false)}}>
+        <Routes location={location} key={location.key}>
+          <Route element={<Home />} path="*" />
+          <Route
+            path="/base"
+            element={<Base addBase={addBase} pizza={pizza} />}
+          />
+          <Route
+            path="/toppings"
+            element={<Toppings addTopping={addTopping} pizza={pizza} />}
+          />
+          <Route path="/order" element={<Order pizza={pizza} setShowModal={setShowModal}/>} />
+          <Route element={<Three />} path="/three" />
+        </Routes>
+      </AnimatePresence>
     </>
   );
 }
